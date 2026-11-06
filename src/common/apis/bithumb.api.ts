@@ -5,20 +5,32 @@ import { bithumbPrivateApi, bithumbPublicApi } from './fetchers/bithumb.fetcher'
 // Public
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Bithumb returns some errors as HTTP 200 with an { error } body
+const throwOnErrorBody = (data: any) => {
+    if (data?.error) {
+        throw { error: data.error.name, message: data.error.message };
+    }
+    return data;
+};
+
 export const getMarket = async ({ markets }: { markets?: string }) => {
-    return await bithumbPublicApi({
-        uri: `/v1/market/all`,
-        method: GET,
-        reqData: { markets },
-    });
+    return throwOnErrorBody(
+        await bithumbPublicApi({
+            uri: `/v1/market/all`,
+            method: GET,
+            reqData: { markets },
+        }),
+    );
 };
 
 export const getTicker = async ({ markets }: { markets: string }) => {
-    return await bithumbPublicApi({
-        uri: `/v1/ticker`,
-        method: GET,
-        reqData: { markets },
-    });
+    return throwOnErrorBody(
+        await bithumbPublicApi({
+            uri: `/v1/ticker`,
+            method: GET,
+            reqData: { markets },
+        }),
+    );
 };
 
 export const getCandleMinute = async ({ market, to, count }: { market: string; to?: string; count: number }) => {

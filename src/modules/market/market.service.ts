@@ -10,18 +10,22 @@ export class MarketService {
 
     async getTop5Markets() {
         const markets = (await getMarket({})).filter((el: any) => el.market.split('-').at(0) === 'KRW');
-        const mid = Math.ceil(markets.length / 2);
 
-        const tickers1 = await getTicker({
-            markets: (markets.slice(0, mid) || []).map((coin: any) => coin.market).join(','),
-        });
-        const tickers2 = await getTicker({
-            markets: (markets.slice(mid) || []).map((coin: any) => coin.market).join(','),
-        });
+        // Bithumb ticker API allows up to 200 markets per call
+        const chunkSize = 200;
+        let allTickers: any[] = [];
+
+        for (let i = 0; i < markets.length; i += chunkSize) {
+            const chunk = markets.slice(i, i + chunkSize);
+            const marketStr = chunk.map((coin: any) => coin.market).join(',');
+            const tickers = await getTicker({ markets: marketStr });
+            allTickers = [...allTickers, ...tickers];
+        }
+
         const ignoreMarkets = ['KRW-NFT', 'KRW-BTT', 'KRW-USDT', 'KRW-USDC'];
 
         const mergedList = Object.values(
-            [...markets, ...tickers1, ...tickers2].reduce((acc: any, item: any) => {
+            [...markets, ...allTickers].reduce((acc: any, item: any) => {
                 acc[item.market] = { ...acc[item.market], ...item };
                 return acc;
             }, {}),
